@@ -92,7 +92,7 @@ parser.add_argument('--target_dir',
                     type=str,
                     help='Path of the target directory, where the mxXML files and the target csv file are located. It '
                          'is also the output location of the EIC csv file that will be generated',
-                    default='NegIDed_FIN.csv')
+                    default='../NTA-Tools/Test_Files')
 
 
 @dataclass
@@ -112,15 +112,25 @@ class EICgen:
         self.max_threads = os.cpu_count() + 1
         self.mzXML_dir = kwargs['target_dir']
         self.target_file = kwargs['target_file']
+        print(f"Running EIC csv generation against target file: {self.target_file}, target dir: {self.mzXML_dir}")
+
         # translate columns to zero indexed column numbers
         self.mz_col = kwargs['mz_column'] - 1
         self.RT_col = kwargs['rt_column'] - 1
         self.feature_id_col = kwargs['feature_id_col'] - 1
         self.tolerance = kwargs['mz_tolerance']
         self.zoom_window = kwargs['zoom_window']
+
+        # compile a list of all mxXML files in the target directory
         self.dir_files = [os.path.abspath(os.path.join(self.mzXML_dir, f)) for f in os.listdir(self.mzXML_dir)]
         self.mzXML_files = [f for f in self.dir_files if f.split('.')[-1] == 'mzXML']
+
+        # convert mxXML files to csv to get started
         self.mzCSV_files = self.convert_all_mzXML_to_CSV()
+
+        # read all csv files into memory before parsing
+        # (this is the current approach, other approaches
+        # may be explored in the future)
         self.dfs = self.read_mzCSV_files()
 
     def run(self):
